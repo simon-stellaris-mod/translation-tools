@@ -2,7 +2,7 @@
 
 Translation tools for stellaris. This tool is used to help create a translation mod of another mod or mods.
 
-![Screenshot](https://github.com/simon-stellaris-mod/translation-tools/blob/main/doc/image.jpg?raw=true)
+![Screenshot](https://github.com/simon-stellaris-mod/translation-tools/blob/main/doc/screenshot.jpg?raw=true)
 
 ## Usage
 
