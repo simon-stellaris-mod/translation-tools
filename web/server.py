@@ -15,7 +15,7 @@ import os.path
 
 from datetime import datetime
 
-from bottle import HTTPError, abort, get, post, request, response, run, static_file, template
+from bottle import HTTPError, abort, get, post, request, response, run, static_file, template, TEMPLATE_PATH
 
 from translation import TranslationManager
 from utils import json, LanguageNames
@@ -26,7 +26,8 @@ gDefaultTargetLanguage: str | None = None
 gBuildOutputPath: str | None = None
 
 StaticRootPath = os.path.join(os.path.dirname(os.path.abspath(__file__)), "static")
-
+TemplatePath = os.path.join(os.path.dirname(os.path.abspath(__file__)), "views")
+TEMPLATE_PATH.insert(0, TemplatePath)
 
 def json_response(f):
     """Wrap as a json response
