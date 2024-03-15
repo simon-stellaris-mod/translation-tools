@@ -1,0 +1,114 @@
+/* Layout */
+body {
+  font-size: 0.85rem;
+}
+
+.index-root {
+  width: 100vw;
+  height: 100vh;
+  display: flex;
+  flex-direction: column;
+}
+
+.index-navbar {
+  flex: 0 0 auto;
+}
+
+.index-content {
+  flex: 1 1 auto;
+  display: flex;
+  flex-direction: row;
+  overflow: hidden;
+}
+
+#alert-success-container {
+  position: absolute;
+  height: auto;
+  max-width: 50%;
+  top: 20px;
+  left: 50%;
+  transform: translate(-50%, 0);
+  z-index: 9999;
+  pointer-events: none;
+  overflow: hidden;
+}
+
+/* Common */
+
+.vertical-divider {
+  width: 1px;
+  background-color: #6c757d;
+}
+
+/* Navbar */
+
+.navbar-tools {
+  display: flex;
+  gap: 6px;
+}
+
+.btn-save {
+  white-space: nowrap;
+}
+
+.btn-save-and-build {
+  white-space: nowrap;
+}
+
+.language-select {
+  min-width: 160px;
+}
+
+/* Content */
+
+.translation-keys {
+  flex: 0 0 360px;
+  overflow-x: hidden;
+  overflow-y: auto;
+  display: flex;
+  flex-direction: column;
+}
+
+.translation-keys-inner-container {
+  margin: 6px 12px 6px 6px;
+}
+
+.translation-key-card {
+  margin-top: 12px;
+}
+
+.translation-keys-inner-container>.translation-key-card:first-child {
+  margin-top: 0px;
+}
+
+.translation-key-item {
+  cursor: pointer;
+}
+
+.translation-key-item>.badge {
+  pointer-events: none
+}
+
+.index-content-divider {
+  margin-top: 32px;
+  margin-bottom: 32px;
+}
+
+.translation-content {
+  flex: 1 1 auto;
+  display: flex;
+  flex-direction: column;
+  margin: 6px;
+  gap: 6px;
+}
+
+.translation-content-original-value {
+  flex: 0 0 auto;
+  overflow-y: auto;
+  overflow-x: hidden;
+  max-height: 50%;
+}
+
+.translation-content-new-value {
+  flex: 1 1 auto;
+}
