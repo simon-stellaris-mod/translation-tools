@@ -19,7 +19,7 @@ Translation tools for stellaris. This tool is used to help create a translation 
 
 Run `python3 ./web/server.py ....` with following arguments:
 
-- **--source-dir**: The source localisation data directory. Usually the localisation directory of a mod or a sub directory of a specific language.
-- **--data-file**: The local data file which stores all translations, actually a json file.
 - **--name**: The name of this translation, used when building stellaris localisation files. Use source mod name (or a short name) is a good practice
-- **--build-dir**: The output directory, usually the localisation directory of your translation mod
+- **--source-path**: The path of source mod's localisation directory or file. Usually the localisation directory of a mod or a sub directory of a specific language. You can specify multiple directories or files.
+- **--data-file**: The local data file which stores all translations, actually a json file.
+- **--output-path**: The output directory path, usually the localisation directory of your translation mod
