@@ -20,8 +20,6 @@ from ruamel.yaml.scalarstring import DoubleQuotedScalarString
 from utils import LanguageNames, json, yaml
 
 LocalisationValue = NamedTuple("LocalisationValue", [("language", str), ("value", str)])
-LocalisationFile = NamedTuple("LocalisationFile", [("name", str), ("keys_", List[str]), ("values", List[LocalisationValue])])
-LocalisationDirectory = NamedTuple("LocalisationDirectory", [("name", str), ("files", List[LocalisationFile]), ("dirs", List)])
 LocalisationItem = NamedTuple("LocalisationItem", [("key", str), ("values", List[LocalisationValue])])
 
 AvailableFileSuffix = ["_l_%s.yml" % lang for lang in LanguageNames]
@@ -32,13 +30,12 @@ class LocalisationData(object):
     """Localisation data
     """
 
-    def __init__(self, dirpath: str) -> None:
+    def __init__(self, source_paths: List[str]) -> None:
         """Create a new LocalisationData
         """
-        self._dir: LocalisationDirectory | None = None
-        self._dirpath = dirpath
-        self._items: Dict[str, LocalisationItem] | None = None
-        self._sorted_keys: List[str] | None = None
+        self._source_paths = source_paths
+        self._items: Dict[str, LocalisationItem] = {}
+        self._sorted_keys: List[str] = []
         self.reload()
 
     @property
@@ -55,32 +52,13 @@ class LocalisationData(object):
     def reload(self):
         """Load or reload data
         """
-        # Read dir
-        items: Dict[str, LocalisationItem] = {}
-        root_dir = LocalisationDirectory("", [], [])
+        self._items = {}
 
-        def read_dir(dirpath: str, dir_: LocalisationDirectory):
-            for name in os.listdir(dirpath):
-                fullpath = os.path.join(dirpath, name)
-                if os.path.isdir(fullpath):
-                    sub_dir = LocalisationDirectory(name, [], [])
-                    dir_.dirs.append(sub_dir)
-                    read_dir(fullpath, sub_dir)
-                elif os.path.isfile(fullpath):
-                    if self._check_filename(fullpath):
-                        file_ = self._read_file(fullpath)
-                        # Add to directory
-                        dir_.files.append(file_)
-                        # Add to items
-                        for i, key in enumerate(file_.keys_):
-                            if key not in items:
-                                items[key] = LocalisationItem(key, [file_.values[i]])
-                            else:
-                                items[key].values.append(file_.values[i])
-
-        read_dir(self._dirpath, root_dir)
-        self._dir = root_dir
-        self._items = items
+        for source_path in self._source_paths:
+            if os.path.isdir(source_path):
+                self._read_directory(source_path)
+            elif os.path.isfile(source_path):
+                self._read_file(source_path)
 
         # Sort keys
         self._sorted_keys = sorted(self._items.keys())
@@ -93,12 +71,20 @@ class LocalisationData(object):
                 return True
         return False
 
-    def _read_file(self, filename: str) -> LocalisationFile:
+    def _read_directory(self, dirpath: str) -> None:
+        """Read directory
+        """
+        for name in os.listdir(dirpath):
+            fullpath = os.path.join(dirpath, name)
+            if os.path.isdir(fullpath):
+                self._read_directory(fullpath)
+            elif os.path.isfile(fullpath):
+                self._read_file(fullpath)
+
+    def _read_file(self, filepath: str) -> None:
         """Read file
         """
-        file_ = LocalisationFile(os.path.basename(filename), [], [])
-
-        with open(filename, "r", encoding="utf-8-sig") as fd:
+        with open(filepath, "r", encoding="utf-8-sig") as fd:
             line = fd.readline().strip()
             if not line.endswith(":"):
                 raise ValueError("Invalid file. Malformed header line [%s]." % line)
@@ -128,10 +114,10 @@ class LocalisationData(object):
                 # Unescape
                 value = value.replace("\\\"", "\"").replace("\\\\", "\\")
                 # Add it
-                file_.keys_.append(key)
-                file_.values.append(LocalisationValue(language, value))
-
-        return file_
+                if key not in self._items:
+                    self._items[key] = LocalisationItem(key, [LocalisationValue(language, value)])
+                else:
+                    self._items[key].values.append(LocalisationValue(language, value))
 
 
 TranslationItem = NamedTuple("TranslationItem", [("original_value", str), ("translate_value", str), ("update_time", int)])
@@ -141,12 +127,12 @@ class TranslationManager(object):
     """Translation manager
     """
 
-    def __init__(self, source_dir: str, data_file: str) -> None:
+    def __init__(self, source_paths: List[str], data_file: str) -> None:
         """Create a new TranslationManager
         """
-        self._source_dir = source_dir
+        self._source_paths = source_paths
         self._data_file = data_file
-        self._source_localisation = LocalisationData(source_dir)
+        self._source_localisation = LocalisationData(source_paths)
         self._translation_data: Dict[str, Dict[str, TranslationItem]] | None = None   # language to key to item
         # Reload all data
         self.reload()
@@ -230,13 +216,13 @@ class TranslationManager(object):
         """
         self._save_translation_data()
 
-    def build(self, build_dir: str, name: str):
+    def build(self, name: str, output_path: str, build_none_translated_key: bool):
         """Build
         """
         if not self._translation_data:
             return
         # Ensure dir
-        replace_dir = os.path.join(build_dir, "replace")
+        replace_dir = os.path.join(output_path, "replace")
         if not os.path.isdir(replace_dir):
             os.makedirs(replace_dir)
         # Build each language
@@ -253,7 +239,7 @@ class TranslationManager(object):
                     if item:
                         # Found translation, use the translated value
                         lang_items[key] = DoubleQuotedScalarString(item.translate_value)
-                    else:
+                    elif build_none_translated_key:
                         # Translation not found, try to use the original value or the first value
                         source_item = self._source_localisation.get(key)
                         if source_item and source_item.values:
@@ -319,3 +305,61 @@ class TranslationManager(object):
                                 "t": item.update_time,
                             }
                             print(json.dumps(json_value, sort_keys=True, ensure_ascii=False), file=fd)
+
+
+if __name__ == "__main__":
+
+    import sys
+
+    # Command line tools
+    from argparse import ArgumentParser
+
+    def get_args():
+        """Get args
+        """
+        parser = ArgumentParser(description="Stellaris translation cli")
+        sub_parsers = parser.add_subparsers(dest="action")
+        # Build
+        build_parser = sub_parsers.add_parser("build", help="Build mod files")
+        build_parser.add_argument("--name", dest="name", required=True, help="Name of this translation")
+        build_parser.add_argument("--source-path", dest="source_paths", required=True, default=[], action="append",
+                                  help="The source path, either a directory or a file. Usually [localisation] directory of a mod or a sub directory of a specific language. You MUST ONLY load file(s) for 1 language. You can specify multiple source paths")
+        build_parser.add_argument("--data-file", dest="data_file", required=True, help="The file which stores the translation data")
+        build_parser.add_argument("--output-path", dest="output_path", required=True,
+                                  help="The build output directory path. Usually [localisation] of your mod")
+        build_parser.add_argument("--build-none-translated-key", dest="build_none_translated_key", default=False,
+                                  action="store_true", help="Write none-translated key when building")
+        build_parser.set_defaults(handler=run_build)
+
+        return parser.parse_args()
+
+    def run_build(args):
+        """Run build
+        """
+        # Source
+        source_paths = []
+        if not args.source_paths:
+            raise ValueError("Require at least 1 source path")
+        for source_path in args.source_paths:
+            source_path = os.path.abspath(source_path)
+            if not os.path.isdir(source_path) and not os.path.isfile(source_path):
+                raise ValueError("Source path [%s] not exist" % source_path)
+            source_paths.append(source_path)
+
+        data_file = os.path.abspath(args.data_file)
+        output_path = os.path.abspath(args.output_path)
+
+        if not os.path.isdir(output_path):
+            raise ValueError("Output dir [%s] not exist" % output_path)
+
+        manager = TranslationManager(source_paths, data_file)
+        manager.build(args.name, output_path, build_none_translated_key=args.build_none_translated_key)
+        return 0
+
+    def main():
+        """Main entry
+        """
+        args = get_args()
+        return args.handler(args)
+
+    sys.exit(main())

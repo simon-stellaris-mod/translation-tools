@@ -63,22 +63,45 @@ body {
 
 .translation-keys {
   flex: 0 0 360px;
-  overflow-x: hidden;
-  overflow-y: auto;
+  overflow: hidden;
   display: flex;
   flex-direction: column;
 }
 
 .translation-keys-inner-container {
-  margin: 6px 12px 6px 6px;
+  margin: 6px;
+  display: flex;
+  flex-direction: column;
+  overflow: hidden;
+}
+
+.translation-keys-search-container {
+  flex: 0 0 auto;
+  overflow-x: hidden;
+}
+
+.translation-keys-tab-header {
+  flex: 0 0 auto;
+}
+
+.translation-keys-tab-content {
+  flex: 1 1 auto;
+  overflow-x: hidden;
+  overflow-y: auto;
+}
+
+
+.translation-keys-list-container1 {
+  margin: 6px 0px 6px 0px;
+  flex: 1 1 auto;
 }
 
 .translation-key-card {
-  margin-top: 12px;
+  margin-top: 16px;
 }
 
-.translation-keys-inner-container>.translation-key-card:first-child {
-  margin-top: 0px;
+.translation-keys-list-container>.translation-key-card:first-child {
+  margin-top: 0;
 }
 
 .translation-key-item {
@@ -99,7 +122,7 @@ body {
   display: flex;
   flex-direction: column;
   margin: 6px;
-  gap: 6px;
+  gap: 16px;
 }
 
 .translation-content-original-value {

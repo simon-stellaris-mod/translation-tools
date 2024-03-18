@@ -1,7 +1,50 @@
 var language = "";
 
 function handleLanguageChange() {
-  window.location.href = `/?target_language=${document.getElementById("language-select").value}`;
+  window.location.href = `/?language=${document.getElementById("language-select").value}`;
+}
+
+const handleSearchKeyInputChange = _.debounce(async e => {
+  const query = e.target.value;
+  await updateKeys(query);
+}, 500);
+
+async function updateKeys(query) {
+  try {
+    const response = await fetch(`/_/keys?language=${language}&query=${query}`);
+    if (response.ok) {
+      const data = await response.json();
+      if (data?.ok !== true) {
+        throw new Error(`Error: ${data?.message}`);
+      }
+      // Good, update keys
+      if (data?.data?.new_keys?.length > 0) {
+        const items = [];
+        for (const key of data.data.new_keys) {
+          items.push(`<li class="list-group-item list-group-item-action translation-key-item" data-value="${key}" onclick="handleKeyChange(event)">${key}<span class="badge text-bg-primary rounded-pill">New</span></li>`);
+        }
+        document.getElementById("translation-keys-new-key-list").innerHTML = items.join("\n");
+      }
+      if (data?.data?.changed_keys?.length > 0) {
+        const items = [];
+        for (const key of data.data.changed_keys) {
+          items.push(`<li class="list-group-item list-group-item-action translation-key-item" data-value="${key}" onclick="handleKeyChange(event)">${key}<span class="badge text-bg-warning rounded-pill">Changed</span></li>`);
+        }
+        document.getElementById("translation-keys-changed-key-list").innerHTML = items.join("\n");
+      }
+      if (data?.data?.done_keys?.length > 0) {
+        const items = [];
+        for (const key of data.data.done_keys) {
+          items.push(`<li class="list-group-item list-group-item-action translation-key-item" data-value="${key}" onclick="handleKeyChange(event)">${key}<span class="badge text-bg-success rounded-pill">Done</span></li>`);
+        }
+        document.getElementById("translation-keys-done-key-list").innerHTML = items.join("\n");
+      }
+    } else {
+      throw new Error(`Http Error #${response.status}: ${response.statusText}`);
+    }
+  } catch (e) {
+    showErrorModal(`${e}`, "Update keys failed");
+  }
 }
 
 async function handleSaveClick() {
@@ -162,11 +205,17 @@ document.addEventListener('DOMContentLoaded', function () {
   infoModal = new bootstrap.Modal(document.getElementById("modal-info"), {});
   successAlertContainer = document.getElementById("alert-success-container");
 
+  // Initialize all tooltips
+  const tooltipTriggerList = document.querySelectorAll('[data-bs-toggle="tooltip"]')
+  const tooltipList = [...tooltipTriggerList].map(tooltipTriggerEl => new bootstrap.Tooltip(tooltipTriggerEl))
+
   // Hook events
   document.getElementById("language-select").addEventListener("change", handleLanguageChange);
+  document.getElementById("search-key-input").addEventListener("keyup", handleSearchKeyInputChange);
   document.getElementById("btn-save").addEventListener("click", handleSaveClick);
   document.getElementById("btn-save-and-build").addEventListener("click", handleSaveAndBuildClick);
-  document.querySelectorAll(".translation-key-item").forEach(element => element.addEventListener("click", handleKeyChange));
   document.getElementById("translation-submit").addEventListener("click", submitNewTranslation);
-});
 
+  // Load keys
+  updateKeys("");
+});
