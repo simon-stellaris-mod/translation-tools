@@ -1,6 +1,6 @@
 # encoding=utf-8
 
-""" Translation
+""" Localization
     Author: lipixun
     Created Time : 2024-03-14 15:00:12
 

@@ -17,9 +17,11 @@ Translation tools for stellaris. This tool is used to help create a translation 
 
 **How to start server**
 
-Run `python3 ./web/server.py ....` with following arguments:
+Run `python3 ./scripts/server.py ....` with following arguments:
 
 - **--name**: The name of this translation, used when building stellaris localisation files. Use source mod name (or a short name) is a good practice
 - **--source-path**: The path of source mod's localisation directory or file. Usually the localisation directory of a mod or a sub directory of a specific language. You can specify multiple directories or files.
 - **--data-file**: The local data file which stores all translations, actually a json file.
 - **--output-path**: The output directory path, usually the localisation directory of your translation mod
+
+To see full arguments please run `python3 ./scripts/server.py --help`

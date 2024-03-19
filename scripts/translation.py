@@ -14,7 +14,6 @@ import os
 import os.path
 
 from time import time
-from collections import OrderedDict
 
 from ruamel.yaml.scalarstring import DoubleQuotedScalarString
 
