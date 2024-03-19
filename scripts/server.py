@@ -17,17 +17,22 @@ from datetime import datetime
 
 from bottle import HTTPError, abort, get, post, request, response, run, static_file, template, TEMPLATE_PATH
 
+from localization import LocalizationManager
 from translation import TranslationManager
 from utils import json, LanguageNames
 
 gName: str | None = None
+gLocalizationManager: LocalizationManager | None = None
 gTranslationManager: TranslationManager | None = None
+gTranslationDataFile: str | None = None
 gDefaultTargetLanguage: str | None = None
 gBuildOutputPath: str | None = None
 gBuildNoneTranslatedKey: bool = False
 
-StaticRootPath = os.path.join(os.path.dirname(os.path.abspath(__file__)), "static")
-TemplatePath = os.path.join(os.path.dirname(os.path.abspath(__file__)), "views")
+# Path
+WebPath = os.path.join(os.path.dirname(os.path.dirname(os.path.abspath(__file__))), "web")
+StaticPath = os.path.join(WebPath, "static")
+TemplatePath = os.path.join(WebPath, "views")
 TEMPLATE_PATH.insert(0, TemplatePath)
 
 
@@ -72,7 +77,7 @@ def handle_get_keys():
 
     # Get keys
     language = get_default_language(request.query.language)  # type: ignore
-    new_keys, changed_keys, done_keys, skipped_keys = gTranslationManager.get_keys(language)
+    new_keys, changed_keys, done_keys, skipped_keys = gTranslationManager.get_translation_keys(language)
 
     # Filter keys
     query = request.query.query  # type: ignore
@@ -97,6 +102,7 @@ def handle_get_keys():
 def handle_get_translation():
     """Bottle: Get translation
     """
+    assert gLocalizationManager
     assert gTranslationManager
 
     key = request.query.key  # type: ignore
@@ -108,15 +114,15 @@ def handle_get_translation():
         return
 
     result = {}
-    source_item = gTranslationManager.source_localisation.get(key)
-    if source_item:
+    localization_item = gLocalizationManager.get(key)
+    if localization_item:
         result["source"] = {
-            "key": source_item.key,
+            "key": localization_item.key,
             "values": [
                 {
                     "language": value.language,
                     "value": value.value,
-                } for value in source_item.values
+                } for value in localization_item.values
             ]
         }
 
@@ -170,7 +176,7 @@ def handle_save():
     """
     assert gTranslationManager
 
-    gTranslationManager.save()
+    gTranslationManager.save(gTranslationDataFile)
 
 
 @post("/_/save_and_build")
@@ -182,7 +188,7 @@ def handle_save_and_build():
     assert gBuildOutputPath
     assert gName
 
-    gTranslationManager.save()
+    gTranslationManager.save(gTranslationDataFile)
     gTranslationManager.build(gName, gBuildOutputPath, gBuildNoneTranslatedKey)
 
 
@@ -190,7 +196,7 @@ def handle_save_and_build():
 def handle_static_file(path):
     """Bottle: Get static file
     """
-    return static_file(path, root=StaticRootPath)
+    return static_file(path, root=StaticPath)
 
 
 def get_default_language(language: str | None = None):
@@ -213,6 +219,8 @@ if __name__ == "__main__":
         parser.add_argument("--source-path", dest="source_paths", required=True, default=[], action="append",
                             help="The source path, either a directory or a file. Usually [localisation] directory of a mod or a sub directory of a specific language. You MUST ONLY load file(s) for 1 language. You can specify multiple source paths")
         parser.add_argument("--data-file", dest="data_file", required=True, help="The file which stores the translation data")
+        parser.add_argument("--source-language", dest="source_language", default=None, choices=LanguageNames,
+                            help="Source language. Only preserve the value of specified language. Will preserve all languages if not specified. (I highly recommend to set this flag in order to avoid unexpected language misusage)")
         parser.add_argument("--default-target-language", dest="default_target_language",
                             default="simp_chinese", choices=LanguageNames, help="Default target language")
         parser.add_argument("--output-path", dest="output_path", required=True,
@@ -227,7 +235,9 @@ if __name__ == "__main__":
         """The main entry
         """
         global gName
+        global gLocalizationManager
         global gTranslationManager
+        global gTranslationDataFile
         global gDefaultTargetLanguage
         global gBuildOutputPath
         global gBuildNoneTranslatedKey
@@ -249,15 +259,20 @@ if __name__ == "__main__":
             source_paths.append(source_path)
 
         data_file = os.path.abspath(args.data_file)
-        output_path = os.path.abspath(args.output_path)
-
         if not os.path.isdir(os.path.dirname(data_file)):
             raise ValueError("Parent directory of data file [%s] not exist" % data_file)
+        gTranslationDataFile = args.data_file
+
+        output_path = os.path.abspath(args.output_path)
         if not os.path.isdir(output_path):
             raise ValueError("Output directory [%s] not exist" % output_path)
-
         gBuildOutputPath = output_path
-        gTranslationManager = TranslationManager(source_paths, data_file)
+
+        gLocalizationManager = LocalizationManager([args.source_language] if args.source_language else None)
+        for source_path in source_paths:
+            gLocalizationManager.load(source_path)
+        gTranslationManager = TranslationManager(gLocalizationManager)
+        gTranslationManager.load(data_file)
 
         run(host=args.run_host, port=args.run_port)
 
