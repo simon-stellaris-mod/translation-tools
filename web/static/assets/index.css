@@ -35,9 +35,17 @@ body {
 
 /* Common */
 
-.vertical-divider {
-  width: 1px;
-  background-color: #6c757d;
+.prefix-badge {
+  margin-right: 2px;
+}
+
+.suffix-badge {
+  margin-left: 2px;
+}
+
+.surrounded-badge {
+  margin-left: 2px;
+  margin-right: 2px;
 }
 
 /* Navbar */

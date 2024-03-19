@@ -72,7 +72,7 @@ def handle_get_keys():
 
     # Get keys
     language = get_default_language(request.query.language)  # type: ignore
-    new_keys, changed_keys, done_keys = gTranslationManager.get_keys(language)
+    new_keys, changed_keys, done_keys, skipped_keys = gTranslationManager.get_keys(language)
 
     # Filter keys
     query = request.query.query  # type: ignore
@@ -82,11 +82,13 @@ def handle_get_keys():
         new_keys = [k for k in new_keys if k.lower().find(query) >= 0]
         changed_keys = [k for k in changed_keys if k.lower().find(query) >= 0]
         done_keys = [k for k in done_keys if k.lower().find(query) >= 0]
+        skipped_keys = [k for k in skipped_keys if k.lower().find(query) >= 0]
 
     return {
         "new_keys": new_keys,
         "changed_keys": changed_keys,
         "done_keys": done_keys,
+        "skipped_keys": skipped_keys,
     }
 
 
@@ -122,6 +124,7 @@ def handle_get_translation():
     if translation_item:
         result["translation"] = {
             "value": translation_item.translate_value,
+            "skipped": translation_item.skipped,
             "update_time": datetime.fromtimestamp(translation_item.update_time).strftime("%Y-%m-%d %H:%M:%S") if translation_item.update_time else "Never",
         }
 
@@ -138,21 +141,24 @@ def handle_submit_translation():
     if not request.json:
         abort(400, "Require json payload")
     key = request.json.get("key")  # type: ignore
-    value = request.json.get("value")  # type: ignore
     language = request.json.get("language")  # type: ignore
+    value = request.json.get("value")  # type: ignore
+    skipped = request.json.get("skipped")  # type: ignore
     if not key:
         abort(400, "Require key")
     if not isinstance(key, str):
         abort(400, "Key must be string")
-    if value is not None and not isinstance(value, str):
-        abort(400, "Value must be null or string")
     if not language:
         language = get_default_language()
     if language not in LanguageNames:
         abort(400, "Invalid language")
+    if value is not None and not isinstance(value, str):
+        abort(400, "Value must be null or string")
+    if not isinstance(skipped, bool):
+        skipped = skipped.lower() == "true" if skipped else False
     # Add or delete the translation
-    if value:
-        gTranslationManager.add(key, value, language)
+    if value or skipped:
+        gTranslationManager.add(key, language, value, skipped)
     else:
         gTranslationManager.delete(key, language)
 

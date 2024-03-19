@@ -63,9 +63,24 @@
                 <div class="translation-keys-inner-container">
                     <!-- Search key box -->
                     <div class="translation-keys-search-container input-group mb-3">
-                        <span class="input-group-text" id="Search-key">Search</span>
-                        <input id="search-key-input" type="text" class="form-control" placeholder="Search Content"
+                        <span class="input-group-text" id="Search-key">
+                            <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" fill="currentColor"
+                                class="bi bi-search" viewBox="0 0 16 16">
+                                <path
+                                    d="M11.742 10.344a6.5 6.5 0 1 0-1.397 1.398h-.001q.044.06.098.115l3.85 3.85a1 1 0 0 0 1.415-1.414l-3.85-3.85a1 1 0 0 0-.115-.1zM12 6.5a5.5 5.5 0 1 1-11 0 5.5 5.5 0 0 1 11 0" />
+                            </svg>
+                        </span>
+                        <input id="input-search-key" type="text" class="form-control" placeholder="Search Content"
                             aria-label="Search" aria-describedby="Search-key">
+                        <button class="btn btn-outline-secondary" type="button" id="btn-refresh-keys">
+                            <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" fill="currentColor"
+                                class="bi bi-arrow-clockwise" viewBox="0 0 16 16">
+                                <path fill-rule="evenodd"
+                                    d="M8 3a5 5 0 1 0 4.546 2.914.5.5 0 0 1 .908-.417A6 6 0 1 1 8 2z" />
+                                <path
+                                    d="M8 4.466V.534a.25.25 0 0 1 .41-.192l2.36 1.966c.12.1.12.284 0 .384L8.41 4.658A.25.25 0 0 1 8 4.466" />
+                            </svg>
+                        </button>
                     </div>
                     <!-- Keys tab header-->
                     <ul class="nav nav-tabs translation-keys-tab-header" id="myTab" role="tablist">
@@ -93,6 +108,14 @@
                                     data-bs-title="Keys which has already translated in target language">Done</span>
                             </button>
                         </li>
+                        <li class="nav-item" role="presentation">
+                            <button class="nav-link" id="skipped-keys-tab" data-bs-toggle="tab"
+                                data-bs-target="#skipped-keys-tab-pane" type="button" role="tab"
+                                aria-controls="skipped-keys-tab-pane" aria-selected="false">
+                                <span data-bs-toggle="tooltip" data-bs-placement="top"
+                                    data-bs-title="Keys which is skipped, usually an alias key of another key">Skipped</span>
+                            </button>
+                        </li>
                     </ul>
                     <!-- Keys tab content -->
                     <div class="tab-content translation-keys-tab-content">
@@ -107,6 +130,10 @@
                         <div class="tab-pane fade" id="done-keys-tab-pane" role="tabpanel"
                             aria-labelledby="done-keys-tab" tabindex="2">
                             <ul id="translation-keys-done-key-list" class="list-group list-group-flush"></ul>
+                        </div>
+                        <div class="tab-pane fade" id="skipped-keys-tab-pane" role="tabpanel"
+                            aria-labelledby="skipped-keys-tab" tabindex="3">
+                            <ul id="translation-keys-skipped-key-list" class="list-group list-group-flush"></ul>
                         </div>
                     </div>
                 </div>
@@ -124,15 +151,22 @@
                 <div class="card translation-content-card translation-content-new-value">
                     <div class="card-body">
                         <h5 class="card-title">Translation</h5>
-                        <form id="translation-new-value-form">
-                            <input type="hidden" id="translation-new-key">
+                        <form id="translation-translate-form">
+                            <input type="hidden" id="translation-translate-key">
                             <div class="mb-3">
-                                <textarea id="translation-new-value" class="form-control" rows="5" disabled
+                                <textarea id="input-translation-translate-value" class="form-control" rows="5" disabled
                                     placeholder="Translation"></textarea>
                             </div>
-                            <p id="translation-new-update-time">Update time: Never</p>
+                            <div class="form-check">
+                                <input class="form-check-input" type="checkbox" value="" disabled
+                                    id="checkbox-translation-translate-skipped">
+                                <label class="form-check-label" for="translation-translate-skipped">
+                                    Skip (Will not generate translation data)
+                                </label>
+                            </div>
+                            <p id="translation-translate-update-time">Update time: Never</p>
                             <p>Attention: All " and \ will be automatically escaped</p>
-                            <button id="translation-submit" type="submit" class="btn btn-primary"
+                            <button id="btn-translation-submit" type="submit" class="btn btn-primary"
                                 disabled>Submit</button>
                         </form>
                     </div>

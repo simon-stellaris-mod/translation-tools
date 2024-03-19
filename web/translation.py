@@ -112,7 +112,7 @@ class LocalisationData(object):
                 key = line[:index1]
                 value = line[index2+1:-1]
                 # Unescape
-                value = value.replace("\\\"", "\"").replace("\\\\", "\\")
+                value = value.replace("\\n", "\n").replace("\\\"", "\"").replace("\\\\", "\\")
                 # Add it
                 if key not in self._items:
                     self._items[key] = LocalisationItem(key, [LocalisationValue(language, value)])
@@ -120,7 +120,12 @@ class LocalisationData(object):
                     self._items[key].values.append(LocalisationValue(language, value))
 
 
-TranslationItem = NamedTuple("TranslationItem", [("original_value", str), ("translate_value", str), ("update_time", int)])
+TranslationItem = NamedTuple("TranslationItem", [
+    ("original_value", str),
+    ("translate_value", str),
+    ("skipped", bool),
+    ("update_time", int),
+])
 
 
 class TranslationManager(object):
@@ -149,13 +154,15 @@ class TranslationManager(object):
         self._source_localisation.reload()
         self._load_translation_data()
 
-    def get_keys(self, language: str) -> Tuple[List[str], List[str], List[str]]:
+    def get_keys(self, language: str) -> Tuple[List[str], List[str], List[str], List[str]]:
         """Get keys with state give target language
+        Returns:
+            (news keys, changed keys, done keys, skipped keys)
         """
-        new_keys, changed_keys, done_keys = [], [], []
+        new_keys, changed_keys, done_keys, skipped_keys = [], [], [], []
 
         if not self._source_localisation.sorted_keys:
-            return new_keys, changed_keys, done_keys
+            return new_keys, changed_keys, done_keys, skipped_keys
 
         items = self._translation_data.get(language) if self._translation_data else None
         for key in self._source_localisation.sorted_keys:
@@ -174,11 +181,14 @@ class TranslationManager(object):
                 if value.values[0].value != items[key].original_value:
                     # Update
                     changed_keys.append(key)
+                elif items[key].skipped:
+                    # Skipped
+                    skipped_keys.append(key)
                 else:
                     # Done
                     done_keys.append(key)
 
-        return new_keys, changed_keys, done_keys
+        return new_keys, changed_keys, done_keys, skipped_keys
 
     def get(self, key: str, language: str) -> TranslationItem | None:
         """Get a translation
@@ -188,7 +198,7 @@ class TranslationManager(object):
             if language_values:
                 return language_values.get(key)
 
-    def add(self, key: str, value: str, language: str) -> None:
+    def add(self, key: str, language: str, value: str, skipped: bool) -> None:
         """Add a translation
         """
         if not self._translation_data:
@@ -201,14 +211,14 @@ class TranslationManager(object):
             raise ValueError("Source localisation not found")
         original_value = item.values[0].value
         # Add it
-        self._translation_data[language][key] = TranslationItem(original_value, value, int(time()))
+        self._translation_data[language][key] = TranslationItem(original_value, value, skipped, int(time()))
 
     def delete(self, key: str, language: str) -> None:
         """Delete a translation
         """
         if self._translation_data:
             language_values = self._translation_data.get(language)
-            if language_values:
+            if language_values and key in language_values:
                 del language_values[key]
 
     def save(self):
@@ -236,7 +246,7 @@ class TranslationManager(object):
             if self._source_localisation.sorted_keys:
                 for key in self._source_localisation.sorted_keys:
                     item = lang_values.get(key)
-                    if item:
+                    if item and not item.skipped:
                         # Found translation, use the translated value
                         lang_items[key] = DoubleQuotedScalarString(item.translate_value)
                     elif build_none_translated_key:
@@ -270,33 +280,34 @@ class TranslationManager(object):
                 if line:
                     value = json.loads(line)
                     if value:
-                        language, key, original_value, translate_value, update_time = \
-                            value.get("l"), value.get("k"), value.get("v0"), value.get("v1"), value.get("t")
+                        language, key, original_value, translate_value, skipped, update_time = \
+                            value.get("l"), value.get("k"), value.get("v0"), value.get("v1"), value.get("s", False), value.get("t")
                         language = language.strip()
                         key = key.strip()
+                        skipped = False if skipped is False else True
                         if not isinstance(update_time, int):
                             update_time = 0
-                        if language and value:
+                        if language and (value or skipped):
                             # Add this item
                             if language not in data:
                                 data[language] = {
-                                    key: TranslationItem(original_value, translate_value, update_time)
+                                    key: TranslationItem(original_value, translate_value, skipped, update_time)
                                 }
                             else:
-                                data[language][key] = TranslationItem(original_value, translate_value, update_time)
+                                data[language][key] = TranslationItem(original_value, translate_value, skipped, update_time)
 
         self._translation_data = data
 
     def _save_translation_data(self):
         """Save translation data
 
-            NOTE: Sort keys fit for git change tracing
+            NOTE: Sort keys for better git change tracing
         """
         with open(self._data_file, "w", encoding="utf-8") as fd:
             if self._translation_data:
                 for language, items in sorted(self._translation_data.items(), key=lambda p: p[0]):
                     for key, item in sorted(items.items(), key=lambda p: p[0]):
-                        if item.translate_value:
+                        if item.translate_value or item.skipped:
                             json_value = {
                                 "l": language,
                                 "k": key,
@@ -304,6 +315,8 @@ class TranslationManager(object):
                                 "v1": item.translate_value,
                                 "t": item.update_time,
                             }
+                            if item.skipped:
+                                json_value["s"] = True
                             print(json.dumps(json_value, sort_keys=True, ensure_ascii=False), file=fd)
 
 
