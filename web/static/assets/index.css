@@ -69,8 +69,10 @@ body {
 
 /* Content */
 
+/* Translation keys */
+
 .translation-keys {
-  flex: 0 0 360px;
+  flex: 0 0 480px;
   overflow: hidden;
   display: flex;
   flex-direction: column;
@@ -98,7 +100,6 @@ body {
   overflow-y: auto;
 }
 
-
 .translation-keys-list-container1 {
   margin: 6px 0px 6px 0px;
   flex: 1 1 auto;
@@ -120,10 +121,7 @@ body {
   pointer-events: none
 }
 
-.index-content-divider {
-  margin-top: 32px;
-  margin-bottom: 32px;
-}
+/* Translation content */
 
 .translation-content {
   flex: 1 1 auto;

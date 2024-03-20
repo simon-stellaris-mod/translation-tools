@@ -46,22 +46,24 @@ async function updateTranslationKeys(query) {
       if (data?.ok !== true) {
         throw new Error(`Error: ${data?.message}`);
       }
-      // Good, update keys
-      const updateKeyList = (keys, elmName) => {
+      // Good, update key tab
+      const updateKeyTab = (keys, sizeElementName, listElementName) => {
         if (keys?.length > 0) {
           const items = [];
           for (const key of keys) {
             items.push(`<li class="list-group-item list-group-item-action translation-key-item" data-value="${key}" onclick="handleTranslationKeyItemClick(event)">${key}</li>`);
           }
-          document.getElementById(elmName).innerHTML = items.join("\n");
+          document.getElementById(listElementName).innerHTML = items.join("\n");
+          document.getElementById(sizeElementName).innerHTML = `${keys.length}`;
         } else {
-          document.getElementById(elmName).innerHTML = "";
+          document.getElementById(listElementName).innerHTML = "";
+          document.getElementById(sizeElementName).innerHTML = "0";
         }
       }
-      updateKeyList(data?.data?.new_keys, "translation-keys-new-key-list");
-      updateKeyList(data?.data?.changed_keys, "translation-keys-changed-key-list");
-      updateKeyList(data?.data?.done_keys, "translation-keys-done-key-list");
-      updateKeyList(data?.data?.skipped_keys, "translation-keys-skipped-key-list");
+      updateKeyTab(data?.data?.new_keys, "translation-keys-tab-header-new-key-size", "translation-keys-new-key-list");
+      updateKeyTab(data?.data?.changed_keys, "translation-keys-tab-header-changed-key-size", "translation-keys-changed-key-list");
+      updateKeyTab(data?.data?.done_keys, "translation-keys-tab-header-done-key-size", "translation-keys-done-key-list");
+      updateKeyTab(data?.data?.skipped_keys, "translation-keys-tab-header-skipped-key-size", "translation-keys-skipped-key-list");
     } else {
       throw new Error(`Http Error #${response.status}: ${response.statusText}`);
     }

@@ -89,7 +89,10 @@
                                 data-bs-target="#new-keys-tab-pane" type="button" role="tab"
                                 aria-controls="new-keys-tab-pane" aria-selected="true">
                                 <span data-bs-toggle="tooltip" data-bs-placement="top"
-                                    data-bs-title="Keys which doesn't have translation in target language">New</span>
+                                    data-bs-title="Keys which doesn't have translation in target language">
+                                    New
+                                    (<span id="translation-keys-tab-header-new-key-size">0</span>)
+                                </span>
                             </button>
                         </li>
                         <li class="nav-item" role="presentation">
@@ -97,7 +100,10 @@
                                 data-bs-target="#changed-keys-tab-pane" type="button" role="tab"
                                 aria-controls="changed-keys-tab-pane" aria-selected="false">
                                 <span data-bs-toggle="tooltip" data-bs-placement="top"
-                                    data-bs-title="Keys which has changed its original value after translated in target language">Changed</span>
+                                    data-bs-title="Keys which has changed its original value after translated in target language">
+                                    Changed
+                                    (<span id="translation-keys-tab-header-changed-key-size">0</span>)
+                                </span>
                             </button>
                         </li>
                         <li class="nav-item" role="presentation">
@@ -105,7 +111,10 @@
                                 data-bs-target="#done-keys-tab-pane" type="button" role="tab"
                                 aria-controls="done-keys-tab-pane" aria-selected="false">
                                 <span data-bs-toggle="tooltip" data-bs-placement="top"
-                                    data-bs-title="Keys which has already translated in target language">Done</span>
+                                    data-bs-title="Keys which has already translated in target language">
+                                    Done
+                                    (<span id="translation-keys-tab-header-done-key-size">0</span>)
+                                </span>
                             </button>
                         </li>
                         <li class="nav-item" role="presentation">
@@ -113,7 +122,10 @@
                                 data-bs-target="#skipped-keys-tab-pane" type="button" role="tab"
                                 aria-controls="skipped-keys-tab-pane" aria-selected="false">
                                 <span data-bs-toggle="tooltip" data-bs-placement="top"
-                                    data-bs-title="Keys which is skipped, usually an alias key of another key">Skipped</span>
+                                    data-bs-title="Keys which is skipped, usually an alias key of another key">
+                                    Skipped
+                                    (<span id="translation-keys-tab-header-skipped-key-size">0</span>)
+                                </span>
                             </button>
                         </li>
                     </ul>
