@@ -162,7 +162,10 @@
                 <!-- Translation: Translated content -->
                 <div class="card translation-content-card translation-content-new-value">
                     <div class="card-body">
-                        <h5 class="card-title">Translation</h5>
+                        <div class="translation-content-card-header">
+                            <h5 class="card-title">Translation</h5>
+                            <span id="translation-translate-update-time">Update time: Never</span>
+                        </div>
                         <form id="translation-translate-form">
                             <input type="hidden" id="translation-translate-key">
                             <div class="mb-3">
@@ -172,14 +175,21 @@
                             <div class="form-check">
                                 <input class="form-check-input" type="checkbox" value="" disabled
                                     id="checkbox-translation-translate-skipped">
-                                <label class="form-check-label" for="translation-translate-skipped">
+                                <label class="form-check-label" for="checkbox-translation-translate-skipped">
                                     Skip (Will not generate translation data)
                                 </label>
                             </div>
-                            <p id="translation-translate-update-time">Update time: Never</p>
-                            <p>Attention: All " and \ will be automatically escaped</p>
-                            <button id="btn-translation-submit" type="submit" class="btn btn-primary"
-                                disabled>Submit</button>
+                            <p>Notes:</p>
+                            <ul>
+                                <li>Attention: All " and \ will be automatically escaped</li>
+                                <li>Press "Ctrl + Enter" will submit the translation and move to next item</li>
+                            </ul>
+                            <div class="btn-group" role="group" aria-label="Submit translation">
+                                <button id="btn-translation-submit" type="submit" class="btn btn-primary"
+                                    disabled>Submit</button>
+                                <button id="btn-translation-submit-and-next" type="submit" class="btn btn-primary"
+                                    disabled>Submit and Next (Ctrl + Enter)</button>
+                            </div>
                         </form>
                     </div>
                 </div>

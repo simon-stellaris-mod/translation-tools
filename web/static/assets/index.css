@@ -131,6 +131,12 @@ body {
   gap: 16px;
 }
 
+.translation-content-card-header {
+  display: flex;
+  flex-direction: row;
+  justify-content: space-between;
+}
+
 .translation-content-original-value {
   flex: 0 0 auto;
   overflow-y: auto;

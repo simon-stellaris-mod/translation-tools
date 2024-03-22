@@ -2,6 +2,12 @@ var language = "";
 
 const handleInputSearchKeyKeyUp = _.debounce(async e => await updateTranslationKeys(e.target.value ?? ""), 500);
 
+/*
+
+Navbar
+
+*/
+
 async function handleSaveClick() {
   try {
     const response = await fetch("/_/save", { method: "POST" });
@@ -37,6 +43,12 @@ async function handleSaveAndBuildClick() {
     showErrorModal(`${e}`, "Save and build failed");
   }
 }
+
+/*
+
+Translation key list
+
+*/
 
 async function updateTranslationKeys(query) {
   try {
@@ -76,8 +88,39 @@ async function handleTranslationKeyItemClick(e) {
   // Switch active state
   document.querySelectorAll(".translation-key-item.active").forEach(element => element.classList.remove("active"));
   e.target.classList.add("active");
-  // Fetch data and update translation content
-  const key = e.target.dataset.value;
+  // Update translation content
+  const succeed = await updateTranslationContent(e.target.dataset.value);
+  if (succeed) {
+    document.getElementById("input-translation-translate-value").focus();
+  }
+}
+
+async function moveToNextTranslationKeyItem() {
+  // Get next key of current active element
+  const activeKeyItems = document.querySelectorAll(".translation-key-item.active");
+  if (activeKeyItems.length !== 1) {
+    return;
+  }
+  const nextElement = activeKeyItems[0].nextElementSibling;
+  if (nextElement && nextElement.dataset.value) {
+    // Move to this item
+    document.querySelectorAll(".translation-key-item.active").forEach(element => element.classList.remove("active"));
+    nextElement.classList.add("active");
+    // Update translation content
+    const succeed = await updateTranslationContent(nextElement.dataset.value);
+    if (succeed) {
+      document.getElementById("input-translation-translate-value").focus();
+    }
+  }
+}
+
+/*
+
+Translation content
+
+*/
+
+async function updateTranslationContent(key) {
   if (key) {
     try {
       const response = await fetch(`/_/translation?key=${encodeURIComponent(key)}&language=${encodeURIComponent(language)}`);
@@ -86,20 +129,22 @@ async function handleTranslationKeyItemClick(e) {
         if (data?.ok !== true) {
           throw new Error(`Error: ${data?.message}`);
         }
-        updateTranslationContent(data.data);
+        renderTranslationContent(data.data);
       } else {
         throw new Error(`Http Error #${response.status}: ${response.statusText}`);
       }
+      return true;
     } catch (e) {
       showErrorModal(`${e}`, "Get translation data failed");
-      updateTranslationContent();
+      renderTranslationContent();
     }
   } else {
-    updateTranslationContent();
+    renderTranslationContent();
   }
+  return false;
 }
 
-function updateTranslationContent(data) {
+function renderTranslationContent(data) {
   // Original
   document.getElementById("translation-original-key").innerHTML = data?.source?.key ?? "";
   document.getElementById("translation-original-values").innerHTML = data?.source?.values?.length > 0
@@ -121,17 +166,27 @@ function updateTranslationContent(data) {
     document.getElementById("input-translation-translate-value").disabled = false;
     document.getElementById("checkbox-translation-translate-skipped").disabled = false;
     document.getElementById("btn-translation-submit").disabled = false;
+    document.getElementById("btn-translation-submit-and-next").disabled = false;
   } else {
     // Disable
     document.getElementById("input-translation-translate-value").disabled = true;
     document.getElementById("checkbox-translation-translate-skipped").disabled = true;
     document.getElementById("btn-translation-submit").disabled = true;
+    document.getElementById("btn-translation-submit-and-next").disabled = true;
   }
 }
 
-async function handleSubmitTranslationClick(e) {
-  e.preventDefault();
+async function handleTranslateValueTextAreaKeyPress(e) {
+  if (e.keyCode === 13 && e.ctrlKey) {
+    // Ctrl + Enter, submit it
+    const succeed = await submitTranslation();
+    if (succeed) {
+      moveToNextTranslationKeyItem();
+    }
+  }
+}
 
+async function submitTranslation() {
   // Post data
   const key = document.getElementById("translation-translate-key").value;
   const value = document.getElementById("input-translation-translate-value").value;
@@ -162,12 +217,20 @@ async function handleSubmitTranslationClick(e) {
     } else {
       throw new Error(`Http Error #${response.status}: ${response.statusText}`);
     }
+    return true;
   } catch (e) {
     showErrorModal(`${e}`, "Submit new translation failed");
   }
+  return false;
 }
 
-// Modal utility
+
+/*
+
+Modal utility
+
+*/
+
 var errorModal = null;
 var infoModal = null;
 
@@ -183,7 +246,12 @@ function showInfoModal(content, title = "Info") {
   infoModal.show();
 }
 
-// Alert utility
+/*
+
+Alert utility
+
+*/
+
 var successAlertContainer = null;
 var successAlertAutoCloseHandler = null;
 
@@ -199,7 +267,12 @@ function showSuccessAlert(message) {
 
 var tooltipList = null;
 
-// On loaded
+/*
+
+On loaded
+
+*/
+
 document.addEventListener("DOMContentLoaded", function () {
   // Initalize values
   language = document.getElementById("language-select").value;
@@ -218,7 +291,18 @@ document.addEventListener("DOMContentLoaded", function () {
   document.getElementById("input-search-key").addEventListener("keyup", handleInputSearchKeyKeyUp);
   document.getElementById("btn-refresh-keys").addEventListener("click", () =>
     updateTranslationKeys(document.getElementById("input-search-key").value));
-  document.getElementById("btn-translation-submit").addEventListener("click", handleSubmitTranslationClick);
+  document.getElementById("input-translation-translate-value").addEventListener("keypress", handleTranslateValueTextAreaKeyPress);
+  document.getElementById("btn-translation-submit").addEventListener("click", e => {
+    e.preventDefault();
+    submitTranslation();
+  });
+  document.getElementById("btn-translation-submit-and-next").addEventListener("click", async e => {
+    e.preventDefault();
+    const succeed = await submitTranslation();
+    if (succeed) {
+      moveToNextTranslationKeyItem();
+    }
+  });
 
   // Load keys
   updateTranslationKeys("");
