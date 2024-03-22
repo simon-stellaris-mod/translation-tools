@@ -149,7 +149,7 @@ function renderTranslationContent(data) {
   document.getElementById("translation-original-key").innerHTML = data?.source?.key ?? "";
   document.getElementById("translation-original-values").innerHTML = data?.source?.values?.length > 0
     ? data.source.values.map(value =>
-      `<li class="list-group-item"><span class="badge text-bg-info prefix-badge">${value?.language}</span>${value?.value ? value.value.replace("\n", "<br>") : ""}</li>`
+      `<li class="list-group-item"><span class="badge text-bg-info prefix-badge">${value?.language}</span> ${value?.value ? value.value.replace("\n", "<br>") : ""}</li>`
     ).join("\n")
     : "";
   // Translation
