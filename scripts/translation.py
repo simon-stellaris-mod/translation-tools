@@ -205,7 +205,7 @@ if __name__ == "__main__":
 
     from argparse import ArgumentParser
 
-    AliasValueRegex = re.compile(r"^ *\$[^\$]*\$ *$", re.UNICODE)
+    AliasValueRegex = re.compile(r"^[ \t\n]*((§\S*)*\$[^\$]*\$§*[ \:\-\.\t\n\!\?\,]*)*[ \:\-\.\t\n\!\?\,]*$", re.UNICODE)
 
     def get_args():
         """Get args
@@ -305,6 +305,7 @@ if __name__ == "__main__":
             if not localization_item or not localization_item.values or not localization_item.values[0].value:
                 continue
             if AliasValueRegex.match(localization_item.values[0].value):
+                print("[", localization_item.values[0].value, "]")
                 auto_skip_count += 1
                 translation_manager.add(key, args.target_language, "", True)
 
