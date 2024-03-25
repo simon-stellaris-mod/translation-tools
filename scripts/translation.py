@@ -101,6 +101,8 @@ class TranslationManager(object):
         if not item or not item.values:
             raise ValueError("Source localisation not found")
         original_value = item.values[0].value
+        if value:
+            value = value.strip()  # NOTE: We only strip the translated value
         # Add it
         self._translation_data[language][key] = TranslationValue(original_value, value, skipped, int(time()))
 
@@ -128,6 +130,7 @@ class TranslationManager(object):
                         key = key.strip()
                         if not language or not key:
                             continue
+                        translate_value = translate_value.strip()   # NOTE: We only strip the translated value
                         skipped = False if skipped is False else True
                         if not isinstance(update_time, int):
                             update_time = 0
