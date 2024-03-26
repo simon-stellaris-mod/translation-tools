@@ -305,12 +305,18 @@ if __name__ == "__main__":
 
         for key in itertools.chain(new_keys, changed_keys):
             localization_item = source_localization.get(key)
-            if not localization_item or not localization_item.values or not localization_item.values[0].value:
+            if not localization_item or not localization_item.values or localization_item.values[0].value is None:
                 continue
-            if AliasValueRegex.match(localization_item.values[0].value):
-                print("[", localization_item.values[0].value, "]")
+            # Empty
+            if not localization_item.values[0].value.strip():
                 auto_skip_count += 1
                 translation_manager.add(key, args.target_language, "", True)
+                continue
+            # No need to translate
+            if AliasValueRegex.match(localization_item.values[0].value):
+                auto_skip_count += 1
+                translation_manager.add(key, args.target_language, "", True)
+                continue
 
         print("[+] Found %d new skipped keys" % auto_skip_count)
 
